@@ -44,7 +44,7 @@ namespace param = CGAL::parameters;
 struct point {
     double x, y, z;
     point() {}
-    point(double _x, double _y, int _z) : x(_x), y(_y), z(_z) {}
+    point(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
     double norm() { return hypot(x, y); }
 
     point operator +(point p) const {
