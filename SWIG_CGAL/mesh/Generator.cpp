@@ -46,8 +46,6 @@ struct point {
     point() {}
     point(double _x, double _y, int _z) : x(_x), y(_y), z(_z) {}
     double norm() { return hypot(x, y); }
-double distanceSegs(vector<double> &dimensions, double c1,
-        double c2, int axis, Tr::Weighted_point s1, Tr::Weighted_point s2);
 
     point operator +(point p) const {
         return point(x + p.x, y + p.y, z + p.z);
@@ -61,18 +59,18 @@ double distanceSegs(vector<double> &dimensions, double c1,
     point operator /(double k) const {
         return point(x/k, y/k, z/k);
     }
-    double dist(point p) {
+    double dist(point p) const {
         return hypot(hypot(x-p.x, y-p.y), z-p.z);
     }
     bool operator ==(point p) const {
-        return dist(p) < EPS;
+        return dist(p) < 1e-6;
     }
     double inner(point p) {
         return x*p.x + y*p.y + z*p.z;
     }
 };
 
-double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, Tr::Weighted_point &s1, Tr::Weighted_point &s2) {
+double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, point &p3, point &p4) {
     // Calculating cylinder segment
     point p1, p2;
     if (axis == 0) {
@@ -86,7 +84,7 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
         p1.x = c1;
         p2.x = c1;
         p1.y = 0;
-        p2.y = dimenstions[1];
+        p2.y = dimensions[1];
         p1.z = c2;
         p2.z = c2;
     } else {
@@ -98,13 +96,10 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
         p2.z = dimensions[2];
     }
 
-    // Converting pts
-    point p3(s1.x, s1.y, s1.z);
-    point p4(s2.x, s2.y, s2.z);
 
-    Point u = p2 - p1;
-    Point v = p4 - p3;
-    Point w = p3 - p1;
+    point u = p2 - p1;
+    point v = p4 - p3;
+    point w = p3 - p1;
     double a = u.inner(u);         // always >= 0
     double b = u.inner(v);
     double c = v.inner(v);         // always >= 0
@@ -165,7 +160,7 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
     tc = (std::abs(tN) < 10e-6 ? 0.0 : tN / tD);
 
     // get the difference of the two closest points
-    point dP = w + (sc * u) - (tc * v);  // =  S1(sc) - S2(tc)
+    point dP = w + (u * sc) - (v * tc);  // =  S1(sc) - S2(tc)
 
     return std::sqrt(dP.inner(dP));   // return the closest distance 
 }
@@ -250,12 +245,12 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
         // Verify intersection
         bool validEdge = true;
         for (int i = 0; i < positions_1.size(); ++i){
-//            Tr::Weighted_point p1 = tr.point(vh1);
-//            Tr::Weighted_point p2 = tr.point(vh2);
-//            if (distanceSegs(dimensions, positions_1[i], positions_2[i], axis[i], p1, p2) < radius[i]){
-//                validEdge = false;
-//                break;
-//            }
+            point p1 = point(nodes[i1].x, nodes[i1].y, nodes[i1].z);
+            point p2 = point(nodes[i2].x, nodes[i2].y, nodes[i2].z);
+            if (distanceSegs(dimensions, positions_1[i], positions_2[i], axis[i], p1, p2) < radius[i]){
+                validEdge = false;
+                break;
+            }
         }
 
         // Excluding index 0 (invalid) and adding to
@@ -276,10 +271,4 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
     c3t3.output_to_maya(medit_file);
 
     return nodes;
-}
-
-
-double distanceSegs(vector<double> &dimensions, double c1,
-                    double c2, int axis, Tr::Weighted_point s1, Tr::Weighted_point s2){
-    return 0.0;
 }
