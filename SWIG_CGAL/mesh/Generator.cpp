@@ -46,6 +46,8 @@ struct point {
     point() {}
     point(double _x, double _y, int _z) : x(_x), y(_y), z(_z) {}
     double norm() { return hypot(x, y); }
+double distanceSegs(vector<double> &dimensions, double c1,
+        double c2, int axis, Tr::Weighted_point s1, Tr::Weighted_point s2);
 
     point operator +(point p) const {
         return point(x + p.x, y + p.y, z + p.z);
@@ -245,9 +247,20 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
         int i1 = verticeHandleToIndice[vh1];
         int i2 = verticeHandleToIndice[vh2];
 
+        // Verify intersection
+        bool validEdge = true;
+        for (int i = 0; i < positions_1.size(); ++i){
+//            Tr::Weighted_point p1 = tr.point(vh1);
+//            Tr::Weighted_point p2 = tr.point(vh2);
+//            if (distanceSegs(dimensions, positions_1[i], positions_2[i], axis[i], p1, p2) < radius[i]){
+//                validEdge = false;
+//                break;
+//            }
+        }
+
         // Excluding index 0 (invalid) and adding to
         // the adjacency list of each node
-        if (i1 > 0 && i2 > 0){
+        if (i1 > 0 && i2 > 0 && validEdge){
             i1--; i2--;
             nodes[i1].adj.push_back(i2);
             nodes[i2].adj.push_back(i1);
@@ -263,4 +276,10 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
     c3t3.output_to_maya(medit_file);
 
     return nodes;
+}
+
+
+double distanceSegs(vector<double> &dimensions, double c1,
+                    double c2, int axis, Tr::Weighted_point s1, Tr::Weighted_point s2){
+    return 0.0;
 }
