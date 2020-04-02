@@ -157,11 +157,9 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
     // finally do the division to get sc and tc
     sc = (std::fabs(sN) < 1e-6 ? 0.0 : sN / sD);
     tc = (std::fabs(tN) < 1e-6 ? 0.0 : tN / tD);
-    std::cout << sc << " " << tc << std::endl;
 
     // get the difference of the two closest points
     point dP = w + (u * sc) - (v * tc);  // =  S1(sc) - S2(tc)
-    std::cout << dP.x << " " << dP.y << " " << dP.z << std::endl;
 
     return std::sqrt(dP.inner(dP));   // return the closest distance
 }
@@ -188,9 +186,10 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
     domainOperations.emplace_back("-");
 
     // Adding cylinders
+    const double cylRadiusEps = 1.1; // Increasing the radius here artificially to filter edges with the correct radius after
     for (int i = 0; i < positions_1.size(); ++i){
         Function cyl(cylinder_function(positions_1[i], positions_2[i],
-                radius[i], axis[i]));
+                radius[i] * cylRadiusEps, axis[i]));
         fv.push_back(cyl);
         domainOperations[0]+= "+";
     }
@@ -224,14 +223,14 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
          vit != tr.finite_vertices_end();
          ++vit)
     {
-        verticeHandleToIndice[vit] = nNodes+1;
+        verticeHandleToIndice[vit] = nNodes;
         Tr::Weighted_point p = tr.point(vit);
         nodes.emplace_back(p.x(), p.y(), p.z(), nNodes);
         nNodes++;
     }
 
     // Adding adjacency list to nodes
-    for( auto eit = tr.edges_begin() ;
+    for(auto eit = tr.edges_begin() ;
          eit != tr.edges_end() ;
          ++eit )
     {
@@ -240,36 +239,35 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
         Tr::Vertex_handle vh2 = eit->first->vertex((eit->third)%4);
 
         // Getting integer indices
+        // TODO: Why aren't they in the map? Losing a few vertex because of it
+        if (verticeHandleToIndice.find(vh1) == verticeHandleToIndice.end() ||
+            verticeHandleToIndice.find(vh2) == verticeHandleToIndice.end()) {
+            continue;
+        }
         int i1 = verticeHandleToIndice[vh1];
         int i2 = verticeHandleToIndice[vh2];
 
         // Verify intersection
         bool validEdge = true;
-        for (int i = 0; i < positions_1.size(); ++i){
-            point p1 = point(nodes[i1].x, nodes[i1].y, nodes[i1].z);
-            point p2 = point(nodes[i2].x, nodes[i2].y, nodes[i2].z);
-            if (distanceSegs(dimensions, positions_1[i], positions_2[i], axis[i], p1, p2) < radius[i]){
+        for (int i = 0; i < positions_1.size(); ++i) {
+            point p1(nodes[i1].x, nodes[i1].y, nodes[i1].z);
+            point p2(nodes[i2].x, nodes[i2].y, nodes[i2].z);
+            if (distanceSegs(dimensions, positions_1[i], positions_2[i], axis[i], p1, p2) < radius[i]) {
                 validEdge = false;
                 break;
             }
         }
 
-        // Excluding index 0 (invalid) and adding to
-        // the adjacency list of each node
-        if (i1 > 0 && i2 > 0 && validEdge){
-            i1--; i2--;
+        // Adding to the adjacency list of each node
+        if (validEdge) {
             nodes[i1].adj.push_back(i2);
             nodes[i2].adj.push_back(i1);
         }
-
     }
 
-    // TODO remove this and the mesh output
-    std::cout << "nver: " << tr.number_of_vertices() << "\n";
-
-//    c3t3.cor
-    std::ofstream medit_file("mymesh");
-    c3t3.output_to_maya(medit_file);
+    // std::cout << "nver: " << tr.number_of_vertices() << "\n";
+    // std::ofstream medit_file("mymesh");
+    // c3t3.output_to_maya(medit_file);
 
     return nodes;
 }
