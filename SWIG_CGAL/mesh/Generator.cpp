@@ -41,7 +41,132 @@ typedef K::Point_3 Point;
 
 namespace param = CGAL::parameters;
 
+struct point {
+    double x, y, z;
+    point() {}
+    point(double _x, double _y, int _z) : x(_x), y(_y), z(_z) {}
+    double norm() { return hypot(x, y); }
 
+    point operator +(point p) const {
+        return point(x + p.x, y + p.y, z + p.z);
+    }
+    point operator -(point p) const {
+        return point(x - p.x, y - p.y, z - p.z);
+    }
+    point operator *(double k) const {
+        return point(k*x, k*y, k*z);
+    }
+    point operator /(double k) const {
+        return point(x/k, y/k, z/k);
+    }
+    double dist(point p) {
+        return hypot(hypot(x-p.x, y-p.y), z-p.z);
+    }
+    bool operator ==(point p) const {
+        return dist(p) < EPS;
+    }
+    double inner(point p) {
+        return x*p.x + y*p.y + z*p.z;
+    }
+};
+
+double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, Tr::Weighted_point &s1, Tr::Weighted_point &s2) {
+    // Calculating cylinder segment
+    point p1, p2;
+    if (axis == 0) {
+        p1.x = 0;
+        p2.x = dimensions[0];
+        p1.y = c1;
+        p2.y = c1;
+        p1.z = c2;
+        p2.z = c2;
+    } else if (axis == 1) {
+        p1.x = c1;
+        p2.x = c1;
+        p1.y = 0;
+        p2.y = dimenstions[1];
+        p1.z = c2;
+        p2.z = c2;
+    } else {
+        p1.x = c1;
+        p2.x = c1;
+        p1.y = c2;
+        p2.y = c2;
+        p1.z = 0;
+        p2.z = dimensions[2];
+    }
+
+    // Converting pts
+    point p3(s1.x, s1.y, s1.z);
+    point p4(s2.x, s2.y, s2.z);
+
+    Point u = p2 - p1;
+    Point v = p4 - p3;
+    Point w = p3 - p1;
+    double a = u.inner(u);         // always >= 0
+    double b = u.inner(v);
+    double c = v.inner(v);         // always >= 0
+    double d = u.inner(w);
+    double e = v.inner(w);
+    double D = a*c - b*b;        // always >= 0
+    double sc, sN, sD = D;       // sc = sN / sD, default sD = D >= 0
+    double tc, tN, tD = D;       // tc = tN / tD, default tD = D >= 0
+
+    // compute the line parameters of the two closest points
+    if (D < 10e-6) { // the lines are almost parallel
+        sN = 0.0;         // force using point P0 on segment S1
+        sD = 1.0;         // to prevent possible division by 0.0 later
+        tN = e;
+        tD = c;
+    }
+    else {                 // get the closest points on the infinite lines
+        sN = (b*e - c*d);
+        tN = (a*e - b*d);
+        if (sN < 0.0) {        // sc < 0 => the s=0 edge is visible
+            sN = 0.0;
+            tN = e;
+            tD = c;
+        }
+        else if (sN > sD) {  // sc > 1  => the s=1 edge is visible
+            sN = sD;
+            tN = e + b;
+            tD = c;
+        }
+    }
+
+    if (tN < 0.0) {            // tc < 0 => the t=0 edge is visible
+        tN = 0.0;
+        // recompute sc for this edge
+        if (-d < 0.0)
+            sN = 0.0;
+        else if (-d > a)
+            sN = sD;
+        else {
+            sN = -d;
+            sD = a;
+        }
+    }
+    else if (tN > tD) {      // tc > 1  => the t=1 edge is visible
+        tN = tD;
+        // recompute sc for this edge
+        if ((-d + b) < 0.0)
+            sN = 0;
+        else if ((-d + b) > a)
+            sN = sD;
+        else {
+            sN = (-d +  b);
+            sD = a;
+        }
+    }
+    // finally do the division to get sc and tc
+    sc = (std::abs(sN) < 10e-6 ? 0.0 : sN / sD);
+    tc = (std::abs(tN) < 10e-6 ? 0.0 : tN / tD);
+
+    // get the difference of the two closest points
+    point dP = w + (sc * u) - (tc * v);  // =  S1(sc) - S2(tc)
+
+    return std::sqrt(dP.inner(dP));   // return the closest distance 
+}
 
 vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> positions_1,
                               vector<double> positions_2, vector<double> radius, vector<int> axis) {
@@ -119,8 +244,6 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
         // Getting integer indices
         int i1 = verticeHandleToIndice[vh1];
         int i2 = verticeHandleToIndice[vh2];
-
-        //
 
         // Excluding index 0 (invalid) and adding to
         // the adjacency list of each node
