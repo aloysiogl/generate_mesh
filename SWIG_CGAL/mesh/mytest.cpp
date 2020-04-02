@@ -1,6 +1,7 @@
 #include "Generator.h"
 #include <iostream>
 #include "Point.h"
+#include <cfloat>
 
 //using namespace CGAL::parameters;
 //
@@ -89,11 +90,9 @@ double distanceSegs(Point &p1, Point &p2, Point &p3, Point &p4) {
     // finally do the division to get sc and tc
     sc = (std::fabs(sN) < 1e-6 ? 0.0 : sN / sD);
     tc = (std::fabs(tN) < 1e-6 ? 0.0 : tN / tD);
-    std::cout << sc << " " << tc << std::endl;
 
     // get the difference of the two closest points
     Point dP = w + (u * sc) - (v * tc);  // =  S1(sc) - S2(tc)
-    std::cout << dP.x << " " << dP.y << " " << dP.z << std::endl;
 
     return std::sqrt(dP.inner(dP));   // return the closest distance
 }
@@ -191,12 +190,41 @@ using std::vector;
     }
 }*/
 
+double approxDistanceSegs(Point &p1, Point &p2, Point &p3, Point &p4, int ptsPerSeg = 100) {
+    Point d1 = (p2-p1) / ptsPerSeg;
+    Point d2 = (p4-p3) / ptsPerSeg;
+    double minDist = DBL_MAX;
+    for (Point a = p1; !(a == p2); a = a + d1) {
+        for (Point b = p3; !(b == p4); b = b + d2) {
+            minDist = std::min(minDist, a.dist(b));
+        }
+    }
+    return minDist;
+}
+
+Point randPt() {
+    double x = (rand() % 100) / 50.0 - 2.0;
+    double y = (rand() % 100) / 50.0 - 2.0;
+    double z = (rand() % 100) / 50.0 - 2.0;
+    return Point(x, y, z);
+}
+
 int main(){
 //    test();
-    Point p1(0, 0, 0);
-    Point p2(0, 0, 1);
-    Point p3(0, 2.5, 0);
-    Point p4(0, 2, 1);
-
-    std::cout << distanceSegs(p1, p2, p3, p4) << std::endl;
+    srand(time(NULL));
+    for (int k = 0; k < 1000; k++) {
+        Point p1 = randPt();
+        Point p2 = randPt();
+        Point p3 = randPt();
+        Point p4 = randPt();
+        
+        if (std::abs(distanceSegs(p1, p2, p3, p4) - approxDistanceSegs(p1, p2, p3, p4)) > 0.02) {
+            std::cout << "Seg1: (" << p1.x << ", " << p1.y << ", " << p1.z  
+                      << ") -> (" << p2.x << ", " << p2.y << ", " << p2.z << ")" << std::endl;
+            std::cout << "Seg2: (" << p3.x << ", " << p3.y << ", " << p3.z
+                      << ") -> (" << p4.x << ", " << p4.y << ", " << p4.z << ")" << std::endl;
+            std::cout << "Dist: " << distanceSegs(p1, p2, p3, p4) << " approx: "
+                      << approxDistanceSegs(p1, p2, p3, p4) << std::endl;
+        }
+    }
 }
