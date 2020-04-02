@@ -1,0 +1,12 @@
+
+build-python/
+
+build/
+
+cmake-build-debug/
+
+tmp/
+
+venv/
+
+.DS_Store
