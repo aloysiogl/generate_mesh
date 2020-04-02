@@ -96,10 +96,9 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
         p2.z = dimensions[2];
     }
 
-
     point u = p2 - p1;
     point v = p4 - p3;
-    point w = p3 - p1;
+    point w = p1 - p3;
     double a = u.inner(u);         // always >= 0
     double b = u.inner(v);
     double c = v.inner(v);         // always >= 0
@@ -110,7 +109,7 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
     double tc, tN, tD = D;       // tc = tN / tD, default tD = D >= 0
 
     // compute the line parameters of the two closest points
-    if (D < 10e-6) { // the lines are almost parallel
+    if (D < 1e-6) { // the lines are almost parallel
         sN = 0.0;         // force using point P0 on segment S1
         sD = 1.0;         // to prevent possible division by 0.0 later
         tN = e;
@@ -156,13 +155,15 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
         }
     }
     // finally do the division to get sc and tc
-    sc = (std::abs(sN) < 10e-6 ? 0.0 : sN / sD);
-    tc = (std::abs(tN) < 10e-6 ? 0.0 : tN / tD);
+    sc = (std::fabs(sN) < 1e-6 ? 0.0 : sN / sD);
+    tc = (std::fabs(tN) < 1e-6 ? 0.0 : tN / tD);
+    std::cout << sc << " " << tc << std::endl;
 
     // get the difference of the two closest points
     point dP = w + (u * sc) - (v * tc);  // =  S1(sc) - S2(tc)
+    std::cout << dP.x << " " << dP.y << " " << dP.z << std::endl;
 
-    return std::sqrt(dP.inner(dP));   // return the closest distance 
+    return std::sqrt(dP.inner(dP));   // return the closest distance
 }
 
 vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> positions_1,
