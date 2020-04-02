@@ -20,6 +20,7 @@
 
 #include "FTtoPointFunctionWrapper.h"
 #include "ImplicitFunctions.h"
+#include "Point.h"
 #include "Generator.h"
 
 // Domain
@@ -36,43 +37,11 @@ typedef CGAL::Mesh_criteria_3<Tr> Mesh_criteria;
 typedef Mesh_criteria::Facet_criteria    Facet_criteria;
 typedef Mesh_criteria::Cell_criteria     Cell_criteria;
 
-typedef K::FT FT;
-typedef K::Point_3 Point;
-
 namespace param = CGAL::parameters;
 
-struct point {
-    double x, y, z;
-    point() {}
-    point(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
-    double norm() { return hypot(x, y); }
-
-    point operator +(point p) const {
-        return point(x + p.x, y + p.y, z + p.z);
-    }
-    point operator -(point p) const {
-        return point(x - p.x, y - p.y, z - p.z);
-    }
-    point operator *(double k) const {
-        return point(k*x, k*y, k*z);
-    }
-    point operator /(double k) const {
-        return point(x/k, y/k, z/k);
-    }
-    double dist(point p) const {
-        return hypot(hypot(x-p.x, y-p.y), z-p.z);
-    }
-    bool operator ==(point p) const {
-        return dist(p) < 1e-6;
-    }
-    double inner(point p) {
-        return x*p.x + y*p.y + z*p.z;
-    }
-};
-
-double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, point &p3, point &p4) {
+double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, Point &p3, Point &p4) {
     // Calculating cylinder segment
-    point p1, p2;
+    Point p1, p2;
     if (axis == 0) {
         p1.x = 0;
         p2.x = dimensions[0];
@@ -97,9 +66,9 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
     }
 
 
-    point u = p2 - p1;
-    point v = p4 - p3;
-    point w = p3 - p1;
+    Point u = p2 - p1;
+    Point v = p4 - p3;
+    Point w = p3 - p1;
     double a = u.inner(u);         // always >= 0
     double b = u.inner(v);
     double c = v.inner(v);         // always >= 0
@@ -160,7 +129,7 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
     tc = (std::abs(tN) < 10e-6 ? 0.0 : tN / tD);
 
     // get the difference of the two closest points
-    point dP = w + (u * sc) - (v * tc);  // =  S1(sc) - S2(tc)
+    Point dP = w + (u * sc) - (v * tc);  // =  S1(sc) - S2(tc)
 
     return std::sqrt(dP.inner(dP));   // return the closest distance 
 }
@@ -245,8 +214,8 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
         // Verify intersection
         bool validEdge = true;
         for (int i = 0; i < positions_1.size(); ++i){
-            point p1 = point(nodes[i1].x, nodes[i1].y, nodes[i1].z);
-            point p2 = point(nodes[i2].x, nodes[i2].y, nodes[i2].z);
+            Point p1 = Point(nodes[i1].x, nodes[i1].y, nodes[i1].z);
+            Point p2 = Point(nodes[i2].x, nodes[i2].y, nodes[i2].z);
             if (distanceSegs(dimensions, positions_1[i], positions_2[i], axis[i], p1, p2) < radius[i]){
                 validEdge = false;
                 break;

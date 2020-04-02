@@ -1,5 +1,6 @@
 #include "Generator.h"
 #include <iostream>
+#include "Point.h"
 
 //using namespace CGAL::parameters;
 //
@@ -25,6 +26,77 @@
 //std::function<int (int)> retFun() {
 //    return [](int x) { return x; };
 //}
+
+double distanceSegs(Point &p1, Point &p2, Point &p3, Point &p4) {
+
+
+    Point u = p2 - p1;
+    Point v = p4 - p3;
+    Point w = p3 - p1;
+    double a = u.inner(u);         // always >= 0
+    double b = u.inner(v);
+    double c = v.inner(v);         // always >= 0
+    double d = u.inner(w);
+    double e = v.inner(w);
+    double D = a*c - b*b;        // always >= 0
+    double sc, sN, sD = D;       // sc = sN / sD, default sD = D >= 0
+    double tc, tN, tD = D;       // tc = tN / tD, default tD = D >= 0
+
+    // compute the line parameters of the two closest points
+    if (D < 10e-6) { // the lines are almost parallel
+        sN = 0.0;         // force using point P0 on segment S1
+        sD = 1.0;         // to prevent possible division by 0.0 later
+        tN = e;
+        tD = c;
+    }
+    else {                 // get the closest points on the infinite lines
+        sN = (b*e - c*d);
+        tN = (a*e - b*d);
+        if (sN < 0.0) {        // sc < 0 => the s=0 edge is visible
+            sN = 0.0;
+            tN = e;
+            tD = c;
+        }
+        else if (sN > sD) {  // sc > 1  => the s=1 edge is visible
+            sN = sD;
+            tN = e + b;
+            tD = c;
+        }
+    }
+
+    if (tN < 0.0) {            // tc < 0 => the t=0 edge is visible
+        tN = 0.0;
+        // recompute sc for this edge
+        if (-d < 0.0)
+            sN = 0.0;
+        else if (-d > a)
+            sN = sD;
+        else {
+            sN = -d;
+            sD = a;
+        }
+    }
+    else if (tN > tD) {      // tc > 1  => the t=1 edge is visible
+        tN = tD;
+        // recompute sc for this edge
+        if ((-d + b) < 0.0)
+            sN = 0;
+        else if ((-d + b) > a)
+            sN = sD;
+        else {
+            sN = (-d +  b);
+            sD = a;
+        }
+    }
+    // finally do the division to get sc and tc
+    sc = (std::abs(sN) < 10e-6 ? 0.0 : sN / sD);
+    tc = (std::abs(tN) < 10e-6 ? 0.0 : tN / tD);
+
+    // get the difference of the two closest points
+    Point dP = w + (u * sc) - (v * tc);  // =  S1(sc) - S2(tc)
+
+    return std::sqrt(dP.inner(dP));   // return the closest distance
+}
 
 int fonc() {
 //
@@ -120,5 +192,11 @@ void test(){
 }
 
 int main(){
-    test();
+//    test();
+    Point p1(0, 0, 0);
+    Point p2(1, 1, 1);
+    Point p3(0, 1, 0);
+    Point p4(1, 0, 1);
+
+    std::cout << distanceSegs(p1, p2, p3, p4);
 }

@@ -20,5 +20,5 @@ find_package(Boost REQUIRED COMPONENTS thread)
 add_executable(mesh SWIG_CGAL/mesh/mytest.cpp
         SWIG_CGAL/mesh/implicit_functions.h
         SWIG_CGAL/mesh/mytest.h
-        SWIG_CGAL/mesh/FTtoPointFunctionWrapper.h SWIG_CGAL/mesh/Generator.cpp SWIG_CGAL/mesh/Generator.h SWIG_CGAL/mesh/ImplicitFunctions.h SWIG_CGAL/mesh/MeshNode.cpp SWIG_CGAL/mesh/MeshNode.h)
+        SWIG_CGAL/mesh/FTtoPointFunctionWrapper.h SWIG_CGAL/mesh/Generator.cpp SWIG_CGAL/mesh/Generator.h SWIG_CGAL/mesh/ImplicitFunctions.h SWIG_CGAL/mesh/MeshNode.cpp SWIG_CGAL/mesh/MeshNode.h SWIG_CGAL/mesh/Point.cpp SWIG_CGAL/mesh/Point.h)
 target_link_libraries(mesh  CGAL::CGAL Boost::thread)
