@@ -247,8 +247,13 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
         int i1 = verticeHandleToIndice[vh1];
         int i2 = verticeHandleToIndice[vh2];
 
-        // Verify intersection
         bool validEdge = true;
+
+        // If both nodes are on the floor
+        if (nodes[i1].z < 0.035 && nodes[i2].z < 0.035)
+            validEdge = false;
+
+        // Verify intersection
         for (int i = 0; i < positions_1.size(); ++i) {
             point p1(nodes[i1].x, nodes[i1].y, nodes[i1].z);
             point p2(nodes[i2].x, nodes[i2].y, nodes[i2].z);
