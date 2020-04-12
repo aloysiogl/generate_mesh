@@ -165,7 +165,9 @@ double distanceSegs(vector<double> &dimensions, double c1, double c2, int axis, 
 }
 
 vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> positions_1,
-                              vector<double> positions_2, vector<double> radius, vector<int> axis) {
+                              vector<double> positions_2, vector<double> radius, vector<int> axis,
+                              double criteria_angle, double criteria_size, double criteria_approximation,
+                              double criteria_rediusedge, double criteria_ratio) {
     // TODO consider using const references
     assert(positions_1.size() == positions_2.size() && positions_1.size() == radius.size()
            && positions_1.size() == axis.size() && dimensions.size() == 3);
@@ -203,8 +205,13 @@ vector<MeshNode> generateMesh(vector<double> dimensions, vector<double> position
 
     // Set mesh criteria
     // TODO create a file with the criteria
-    Facet_criteria facet_criteria(30, 0.2, 0.02); // angle, size, approximation
-    Cell_criteria cell_criteria(2., 0.4); // radius-edge ratio, size
+    // angle, size, approximation
+    // Original: 30, 0.2, 0.02
+    // angle, size, approximation
+    Facet_criteria facet_criteria(criteria_angle, criteria_size, criteria_approximation);
+    // radius-edge ratio, size
+    // Original 2., 0.4
+    Cell_criteria cell_criteria(criteria_rediusedge, criteria_ratio);
     Mesh_criteria criteria(facet_criteria, cell_criteria);
 
     // Mesh generation

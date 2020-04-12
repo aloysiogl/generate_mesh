@@ -106,7 +106,7 @@ void test(){
     vector<int> a = {1, 1};
     
 
-    vector<MeshNode>nodes = generateMesh(dimens, c1, c2, r, a);
+    vector<MeshNode>nodes = generateMesh(dimens, c1, c2, r, a, 1, 1, 1, 1, 1);
 
     using std::cout;
     for (MeshNode node : nodes){
