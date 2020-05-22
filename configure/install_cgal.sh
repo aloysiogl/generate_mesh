@@ -1,4 +1,6 @@
 #!/bin/bash
+sudo apt-get install libgmp3-dev libmpfr-dev swig
+
 cd ~
 FILE=~/CGAL-4.14.3.tar.xz
 if [ -f "$FILE" ]; then
